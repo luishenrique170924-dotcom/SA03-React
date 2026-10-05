@@ -52,9 +52,22 @@ const SERIES_INICIAIS = [
   },
 ];
 
+const FILTROS = [
+  {
+    valor: "todas",
+    rotulo: "Todas",
+  },
+  {
+    valor: "pendentes",
+    rotulo: "Quero Assistir",
+  },
+  {
+    valor: "concluidas",
+    rotulo: "Assistidas",
+  },
+];
+
 function App() {
-  // Guarda as séries em um estado
-  // Também recupera as séries salvas no navegador
   const [series, setSeries] = useState(() => {
     const seriesSalvas = localStorage.getItem("seriehub-series");
 
@@ -63,10 +76,11 @@ function App() {
       : SERIES_INICIAIS;
   });
 
-  // Controla o filtro
   const [filtro, setFiltro] = useState("todas");
 
-  // Adicionar uma nova série
+  // Mensagem para leitores de tela
+  const [anuncio, setAnuncio] = useState("");
+
   function adicionarSerie(novaSerie) {
     setSeries((seriesAtuais) => [
       ...seriesAtuais,
@@ -79,33 +93,52 @@ function App() {
         concluida: false,
       },
     ]);
+
+    setAnuncio(`Série "${novaSerie.titulo}" adicionada.`);
   }
 
-  // Marcar/desmarcar como assistida
   function alternarConcluida(id) {
+    const serie = series.find((serie) => serie.id === id);
+
+    if (!serie) return;
+
+    const vaiConcluir = !serie.concluida;
+
+    const status = vaiConcluir
+      ? "assistida"
+      : "para assistir";
+
     setSeries((seriesAtuais) =>
-      seriesAtuais.map((serie) =>
-        serie.id === id
+      seriesAtuais.map((serieAtual) =>
+        serieAtual.id === id
           ? {
-              ...serie,
-              concluida: !serie.concluida,
-              status: !serie.concluida
+              ...serieAtual,
+              concluida: !serieAtual.concluida,
+              status: vaiConcluir
                 ? "Finalizada"
                 : "Quero Assistir",
             }
-          : serie
+          : serieAtual
       )
     );
-  }
 
-  // Remover série
-  function removerSerie(id) {
-    setSeries((seriesAtuais) =>
-      seriesAtuais.filter((serie) => serie.id !== id)
+    setAnuncio(
+      `Série "${serie.titulo}" marcada como ${status}.`
     );
   }
 
-  // Filtrar séries
+  function removerSerie(id) {
+    const serie = series.find((serie) => serie.id === id);
+
+    if (!serie) return;
+
+    setSeries((seriesAtuais) =>
+      seriesAtuais.filter((serieAtual) => serieAtual.id !== id)
+    );
+
+    setAnuncio(`Série "${serie.titulo}" removida.`);
+  }
+
   const seriesFiltradas = series.filter((serie) => {
     if (filtro === "pendentes") {
       return !serie.concluida;
@@ -118,7 +151,6 @@ function App() {
     return true;
   });
 
-  // Salvar as séries no navegador
   useEffect(() => {
     localStorage.setItem(
       "seriehub-series",
@@ -128,14 +160,32 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
+
+      {/* Skip link */}
+      <a
+        href="#conteudo"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:text-slate-900 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg"
+      >
+        Pular para o conteúdo
+      </a>
+
       <Header />
 
-      <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
+      {/* Avisos para leitores de tela */}
+      <div
+        aria-live="polite"
+        role="status"
+        className="sr-only"
+      >
+        {anuncio}
+      </div>
 
-        {/* Formulário para adicionar série */}
+      <main
+        id="conteudo"
+        className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full"
+      >
         <SerieForm onAdicionar={adicionarSerie} />
 
-        {/* Título e filtros */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">
@@ -147,44 +197,29 @@ function App() {
             </p>
           </div>
 
-          {/* Botões de filtro */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFiltro("todas")}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                filtro === "todas"
-                  ? "bg-purple-700 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Todas
-            </button>
-
-            <button
-              onClick={() => setFiltro("pendentes")}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                filtro === "pendentes"
-                  ? "bg-purple-700 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Quero Assistir
-            </button>
-
-            <button
-              onClick={() => setFiltro("concluidas")}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                filtro === "concluidas"
-                  ? "bg-purple-700 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Assistidas
-            </button>
+          {/* Filtros */}
+          <div
+            role="group"
+            aria-label="Filtrar séries"
+            className="flex gap-2"
+          >
+            {FILTROS.map((opcao) => (
+              <button
+                key={opcao.valor}
+                onClick={() => setFiltro(opcao.valor)}
+                aria-pressed={filtro === opcao.valor}
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-purple-700 ${
+                  filtro === opcao.valor
+                    ? "bg-purple-700 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {opcao.rotulo}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Cards das séries */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {seriesFiltradas.map((serie) => (
             <SerieCard
@@ -199,7 +234,6 @@ function App() {
             />
           ))}
         </section>
-
       </main>
 
       <Footer />

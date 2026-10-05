@@ -9,33 +9,43 @@ function SerieCard({
 }) {
   return (
     <article
-      className={`bg-white rounded-xl p-6 shadow-lg border-l-4 border-purple-600 hover:scale-105 transition ${
-        concluida ? "opacity-60" : ""
-      }`}
+      className={`rounded-xl shadow-md p-6 border ${
+        concluida
+          ? "bg-slate-50 border-slate-200"
+          : "bg-white border-slate-100"
+      } hover:shadow-lg transition-shadow`}
     >
-      <span className="text-sm font-semibold text-purple-600">
-        {categoria}
-      </span>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
+          {categoria}
+        </span>
 
-      <h2 className="text-xl font-bold text-gray-800 mt-2">
+        <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-100 text-purple-800">
+          {status}
+        </span>
+      </div>
+
+      <h2
+        className={`text-lg font-semibold mb-4 ${
+          concluida
+            ? "text-slate-500 line-through"
+            : "text-slate-800"
+        }`}
+      >
         {titulo}
       </h2>
 
-      <p className="text-gray-600 mt-3">
+      <p className="text-gray-600 text-sm mb-4">
         {descricao}
       </p>
 
-      <p className="mt-4 text-sm font-bold">
-        Status: {status}
-      </p>
-
-      <div className="flex items-center justify-between mt-5">
-        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
           <input
             type="checkbox"
             checked={concluida}
             onChange={onToggle}
-            className="w-4 h-4 accent-purple-700"
+            className="w-4 h-4 accent-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
           />
 
           Assistida
@@ -43,7 +53,8 @@ function SerieCard({
 
         <button
           onClick={onRemover}
-          className="bg-red-100 text-red-600 hover:bg-red-200 px-3 py-2 rounded-lg text-sm font-semibold transition"
+          aria-label={`Remover série: ${titulo}`}
+          className="text-xs text-red-600 hover:text-red-800 font-semibold focus:outline-none focus:ring-2 focus:ring-red-600 rounded px-1"
         >
           Remover
         </button>
